@@ -42,7 +42,7 @@ export class Monitor {
   }
 
   async rescanCosts() {
-    const file = this.host.transcript()
+    const file = await this.host.transcript()
 
     if (this.scanning || !file) return
 
@@ -75,7 +75,7 @@ export class Monitor {
 
     try {
       const now = Date.now()
-      const file = this.host.transcript()
+      const file = await this.host.transcript()
 
       if (file) {
         await this.follow(file)

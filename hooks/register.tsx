@@ -20,6 +20,8 @@ const MIN_CITY_ROWS = 4
 const MAX_CITY_ROWS = 10
 
 const snapshot = atom({ plugin: 'consumption-hud', key: 'snapshot' } as const, null, { shape: 'snapshot-1' })
+// Claude Code names the transcript at the start of a session and after a /clear; a reload must not lose it.
+const savedTranscript = atom({ plugin: 'consumption-hud', key: 'transcript' } as const, null, { shape: 'transcript-1' })
 
 function agentRows(loops: readonly FleetLoop[]) {
   const agents = loops.filter(one => one.id !== MAIN)
@@ -35,12 +37,9 @@ let city: { columns: number; rows: number } | undefined
 let latest: FleetSnapshot | null = null
 let frame = 0
 let isStarted = false
-/** Claude Code names it on the events below; the configuration directory is read from it. */
-let transcript: string | undefined
-
 function createHost($: EngineInterface): Host {
   return {
-    transcript: () => transcript,
+    transcript: async () => (await read($, savedTranscript)) ?? undefined,
     folders: async () => [await $.session.cwd(), await $.session.root()],
     usage: () => $.session.usage(),
     stat: path => $.fs.stat(path),
@@ -104,14 +103,8 @@ function start($: EngineInterface, options: PluginOptions) {
 }
 
 export const register: Register = (on, options) => {
-  on('classic.SessionStart', ($, e, next) => {
-    transcript = e.transcript_path
-
-    return next(e)
-  })
-
-  on('classic.UserPromptSubmit', ($, e, next) => {
-    transcript = e.transcript_path
+  on('classic.SessionStart', async ($, e, next) => {
+    await update($, savedTranscript, () => e.transcript_path)
 
     return next(e)
   })

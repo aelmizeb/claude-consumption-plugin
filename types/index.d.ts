@@ -83,6 +83,6 @@ export type FleetSnapshot = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'consumption-hud': { snapshot: Shaped<FleetSnapshot | null> }
+    'consumption-hud': { snapshot: Shaped<FleetSnapshot | null>; transcript: Shaped<string | null> }
   }
 }

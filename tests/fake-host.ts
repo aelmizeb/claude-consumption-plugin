@@ -39,7 +39,7 @@ export class FakeHost implements Host {
     return file
   }
 
-  transcript = () => this.transcriptFile
+  transcript = async () => this.transcriptFile
   folders = async () => [this.cwd, this.cwd]
   usage = async () => this.measures
   exists = async (path: string) => this.files.has(path)

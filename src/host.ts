@@ -8,7 +8,7 @@ export type FileEntry = { name: string; kind: 'file' | 'dir' | 'other'; size: nu
  */
 export type Host = {
   /** This session's transcript, as Claude Code last named it; none before its first event. */
-  transcript(): string | undefined
+  transcript(): Promise<string | undefined>
   /** The folders of this session: where it runs and its project root. */
   folders(): Promise<string[]>
   usage(): Promise<SessionUsage>

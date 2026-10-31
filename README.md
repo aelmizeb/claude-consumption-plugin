@@ -70,7 +70,7 @@ Questions: [open an issue](https://github.com/aelmizeb/claude-consumption-plugin
 
 ## What it reads, runs and stores
 
-The plugin only observes. It makes no network request, calls no model, reads no environment variable, does not change your settings, and does not touch your prompts or tool calls. Nothing it reads leaves your computer.
+The plugin only observes. It makes no network request, calls no model, reads no environment variable and uses no credential, API key or login, does not change your settings, and does not touch your prompts or tool calls. Nothing it reads leaves your computer. Throughout the plugin, "tokens" means the model usage Claude Code reports, never an access token.
 
 - **It reads your Claude Code data**, in the folder that holds this session's transcript (`~/.claude` unless you moved it):
   - this session's transcript and those of its sub-agents, for the agents, tools and tokens;
@@ -79,7 +79,7 @@ The plugin only observes. It makes no network request, calls no model, reads no 
 - **It runs one program, `tail`**, as `tail -c +<offset> <transcript>`, on a transcript over 4 MB, because Claude Code's own file API refuses larger files. `tail` only hands the end of that file back to the plugin, which reads it like any other transcript: it sends nothing anywhere, and the plugin starts no other program.
 - **It stores one thing**: a cache in the plugin's own store, in your Claude Code data, so unchanged transcripts are not read again. For each transcript it holds the path, size, date, cost and token counts.
 - **It hooks these events**, and passes each one on unchanged:
-  - `classic.SessionStart` and `classic.UserPromptSubmit`, only to learn where this session's transcript is;
+  - `classic.SessionStart`, only to learn where this session's transcript is. It never reads your prompts as they are sent;
   - `session.start` and `session.attach`, to start when a surface can show the pane;
   - `session.measure`, for the optional status line;
   - `command.run`, only for its own `/consumption` command;
