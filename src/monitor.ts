@@ -1,7 +1,7 @@
 import { type TranscriptCache, scanPeriodCosts } from './costs'
 import type { Host } from './host'
 import { readMemory } from './memory'
-import { basename, dirname, findTranscript } from './paths'
+import { basename, configDirOf, dirname } from './paths'
 import { COMPARE_LABEL, compareUsd } from './pricing'
 import { Session } from './session'
 import { windowPercent } from './status'
@@ -11,8 +11,8 @@ import { type Figures, type FleetMemory, type FleetPeriods, type FleetSnapshot, 
 const CACHE_KEY = 'transcriptCache-1'
 const EMPTY_PERIODS: FleetPeriods = { week: 0, month: 0, unpriced: 0, estimated: 0, compareWeek: 0, compareMonth: 0, scannedAt: 0 }
 const MEMORY_EVERY_MS = 60_000
-/** A transcript missing from where it is expected is looked for across the projects this rarely. */
-const SEARCH_EVERY_MS = 30_000
+
+const sessionIdOf = (file: string) => basename(file).replace(/\.jsonl$/, '')
 
 export type MonitorOptions = { idleAfterSeconds: number; compareWithDeepSeek: boolean }
 
@@ -28,7 +28,6 @@ export class Monitor {
   private lastJson = ''
   private ticking = false
   private scanning = false
-  private searchedAt = 0
 
   constructor(
     private readonly host: Host,
@@ -43,15 +42,16 @@ export class Monitor {
   }
 
   async rescanCosts() {
-    if (this.scanning) return
+    const file = this.host.transcript()
+
+    if (this.scanning || !file) return
 
     this.scanning = true
 
     try {
-      const root = await this.host.configDir()
       const stored = await this.host.load(CACHE_KEY)
       const started = Date.now()
-      const result = await scanPeriodCosts(this.host, root, new Set([await this.host.sessionId()]), isRecord(stored) ? (stored as TranscriptCache) : {}, started)
+      const result = await scanPeriodCosts(this.host, configDirOf(file), new Set([sessionIdOf(file)]), isRecord(stored) ? (stored as TranscriptCache) : {}, started)
 
       this.periods = result.periods
       await this.host.save(CACHE_KEY, result.cache).catch(error => this.host.log(`Cost cache not saved: ${String(error)}`))
@@ -75,11 +75,12 @@ export class Monitor {
 
     try {
       const now = Date.now()
-      const root = await this.host.configDir()
-      const folders = await this.host.folders()
+      const file = this.host.transcript()
 
-      await this.follow(root, folders, now)
-      if (now - this.memory.readAt >= MEMORY_EVERY_MS) this.memory = await readMemory(this.host, root, folders, now)
+      if (file) {
+        await this.follow(file)
+        if (now - this.memory.readAt >= MEMORY_EVERY_MS) this.memory = await readMemory(this.host, configDirOf(file), await this.host.folders(), now)
+      }
 
       const snapshot = await this.snapshot(now)
       const json = JSON.stringify(snapshot)
@@ -95,23 +96,16 @@ export class Monitor {
     }
   }
 
-  /** Keeps `session` on this session's transcript: a /clear changes the id, and a new session has no file yet. */
-  private async follow(root: string, folders: readonly string[], now: number) {
-    const id = await this.host.sessionId()
-
-    if (this.session?.id !== id) {
-      const all = now - this.searchedAt >= SEARCH_EVERY_MS
-
-      if (all) this.searchedAt = now
-
-      const file = await findTranscript(this.host, root, id, folders, all)
-
-      this.session = file ? new Session(this.host, id, file, basename(dirname(file))) : undefined
-      if (file) this.host.log(`Following session ${id} (${file})`)
+  /** Keeps `session` on the transcript Claude Code names: a /clear starts a new one, and the old one joins the others. */
+  private async follow(file: string) {
+    if (this.session?.file !== file) {
+      this.session = new Session(this.host, sessionIdOf(file), file, basename(dirname(file)))
+      this.host.log(`Following session ${this.session.id} (${file})`)
+      void this.rescanCosts()
     }
 
     try {
-      await this.session?.refresh()
+      await this.session.refresh()
     } catch (error) {
       // The figures the engine gives still stand: only the tokens stop moving.
       this.host.log(`Transcript unreadable: ${error instanceof Error ? error.message : String(error)}`)

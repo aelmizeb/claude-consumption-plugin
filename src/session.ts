@@ -135,9 +135,9 @@ export class Session {
 
   /** The tokens of the whole session: the main loop and every sub-agent. */
   totalUsage(): FleetUsage {
-    let total = this.main.usage
+    let total = this.main.totalUsage()
 
-    for (const entry of this.agents.values()) total = addUsage(total, entry.tracker.usage)
+    for (const entry of this.agents.values()) total = addUsage(total, entry.tracker.totalUsage())
 
     return total
   }
@@ -154,7 +154,7 @@ export class Session {
       status: mainStatus,
       startedAt: main.startedAt,
       steps: main.steps,
-      usage: main.usage,
+      usage: main.totalUsage(),
       tool: mainStatus === 'running' ? main.tool : undefined,
       model: main.model,
     }
@@ -181,7 +181,7 @@ export class Session {
         startedAt: tracker.startedAt || spawn?.startedAt || entry.mtimeMs,
         endedAt: status === 'completed' || status === 'killed' ? tracker.lastEventAt || entry.mtimeMs : undefined,
         steps: tracker.steps,
-        usage: tracker.usage,
+        usage: tracker.totalUsage(),
         tool: status === 'running' ? tracker.tool : undefined,
         parentId: MAIN,
         model: tracker.model ?? spawn?.model,

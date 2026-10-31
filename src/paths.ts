@@ -25,29 +25,9 @@ export function ancestors(folder: string): string[] {
   return out
 }
 
-/** The session's transcript: under the folder's own project directory, or `all` of them when asked. */
-export async function findTranscript(host: Host, root: string, id: string, folders: readonly string[], all: boolean): Promise<string | undefined> {
-  const projects = join(root, 'projects')
-
-  for (const folder of folders) {
-    const file = join(projects, projectSlug(folder), `${id}.jsonl`)
-
-    if (await host.exists(file)) return file
-  }
-
-  if (!all) return undefined
-
-  try {
-    for (const entry of await host.list(projects)) {
-      const file = join(projects, entry.name, `${id}.jsonl`)
-
-      if (entry.kind === 'dir' && (await host.exists(file))) return file
-    }
-  } catch {
-    // No projects directory yet.
-  }
-
-  return undefined
+/** The configuration directory a transcript lives in: `<config>/projects/<project>/<session>.jsonl`. */
+export function configDirOf(transcript: string) {
+  return dirname(dirname(dirname(transcript)))
 }
 
 /** The auto-memory directory of an open folder: the folder's own, or the first parent that has one. */

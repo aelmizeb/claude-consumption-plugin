@@ -55,22 +55,13 @@ export class LoopTracker {
   private spawns = new Map<string, { description: string; type: string; model?: string }>()
 
   /** Tokens of the whole loop, last request included. */
-  get usage(): FleetUsage {
+  totalUsage(): FleetUsage {
     let total = emptyUsage()
 
     for (const usage of Object.values(this.committed)) total = addUsage(total, usage)
     if (this.current) total = addUsage(total, this.current.usage)
 
     return total
-  }
-
-  get usageByModel(): Record<string, FleetUsage> {
-    const out: Record<string, FleetUsage> = {}
-
-    for (const [model, usage] of Object.entries(this.committed)) addTo(out, model, usage)
-    if (this.current) addTo(out, this.current.model, this.current.usage)
-
-    return out
   }
 
   /**

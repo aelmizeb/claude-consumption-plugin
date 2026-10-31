@@ -60,6 +60,7 @@ test('week and month add this session to the others, counted once', async () => 
   host.write(`${PROJECT}/sess-1.jsonl`, assistant('m1'))
   host.write(`${PROJECT}/other.jsonl`, line({ type: 'cost-state', totalCostUSD: 3 }))
 
+  await monitor.tick()
   await monitor.rescanCosts()
 
   const { figures } = published.at(-1) ?? {}
@@ -77,22 +78,12 @@ test('a /clear moves on to the new transcript', async () => {
   host.write(`${PROJECT}/sess-1.jsonl`, assistant('m1'))
   await monitor.tick()
 
-  host.id = 'sess-2'
+  host.transcriptFile = `${PROJECT}/sess-2.jsonl`
   host.write(`${PROJECT}/sess-2.jsonl`, assistant('m2') + assistant('m3'))
   await monitor.tick()
 
   expect(published.at(-1)?.sessionId).toBe('sess-2')
   expect(published.at(-1)?.loops[0]?.steps).toBe(2)
-})
-
-test('a session whose folder has moved is found across the projects', async () => {
-  const { host, published, monitor } = setup()
-
-  host.cwd = '/elsewhere'
-  host.write('/home/.claude/projects/-old-place/sess-1.jsonl', assistant('m1'))
-  await monitor.tick()
-
-  expect(published.at(-1)?.project).toBe('-old-place')
 })
 
 test('a transcript that cannot be read still leaves the figures of the engine', async () => {
@@ -109,8 +100,9 @@ test('a transcript that cannot be read still leaves the figures of the engine', 
 })
 
 test('a session with no transcript yet shows the engine figures and no loop', async () => {
-  const { published, monitor } = setup()
+  const { host, published, monitor } = setup()
 
+  host.transcriptFile = undefined
   await monitor.tick()
 
   expect(published.at(-1)?.loops).toEqual([])

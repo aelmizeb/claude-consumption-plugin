@@ -62,15 +62,20 @@ Set them in `/config`.
 
 ## What it reads, runs and stores
 
-The plugin only observes. It makes no network request, calls no model, does not change your settings, and does not touch your prompts or tool calls.
+The plugin only observes. It makes no network request, calls no model, reads no environment variable, does not change your settings, and does not touch your prompts or tool calls. Nothing it reads leaves your computer.
 
-- **It reads your Claude Code data**, in `~/.claude`, or `CLAUDE_CONFIG_DIR` when set:
+- **It reads your Claude Code data**, in the folder that holds this session's transcript (`~/.claude` unless you moved it):
   - this session's transcript and those of its sub-agents, for the agents, tools and tokens;
   - every transcript of every project changed since the start of the week or month, for the week and month costs. It keeps only their token counts and cost, never their content;
   - the project's `MEMORY.md` index, for the entry count.
-- **It reads three environment variables**: `CLAUDE_CONFIG_DIR`, then `HOME` or `USERPROFILE` to find that directory.
-- **It runs one program, `tail`**, on a transcript over 4 MB, which is too large for Claude Code's own file API. Nothing else is started.
+- **It runs one program, `tail`**, as `tail -c +<offset> <transcript>`, on a transcript over 4 MB, because Claude Code's own file API refuses larger files. `tail` only hands the end of that file back to the plugin, which reads it like any other transcript: it sends nothing anywhere, and the plugin starts no other program.
 - **It stores one thing**: a cache in the plugin's own store, in your Claude Code data, so unchanged transcripts are not read again. For each transcript it holds the path, size, date, cost and token counts.
+- **It hooks these events**, and passes each one on unchanged:
+  - `classic.SessionStart` and `classic.UserPromptSubmit`, only to learn where this session's transcript is;
+  - `session.start` and `session.attach`, to start when a surface can show the pane;
+  - `session.measure`, for the optional status line;
+  - `command.run`, only for its own `/consumption` command;
+  - `ui.render`, only to draw its own pane.
 
 To check this yourself, `claude plugin validate` lists every event the plugin hooks and every call it makes.
 

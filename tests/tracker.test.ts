@@ -26,7 +26,7 @@ test('lines that repeat the same message.id count as a single request', () => {
   tracker.apply(assistant('msg_1', [{ type: 'tool_use', id: 'toolu_1', name: 'Bash', input: {} }], usage(2, 450, 30516, 18946, 18946)))
 
   expect(tracker.steps).toBe(1)
-  expect(totalTokens(tracker.usage)).toBe(2 + 450 + 30516 + 18946)
+  expect(totalTokens(tracker.totalUsage())).toBe(2 + 450 + 30516 + 18946)
   expect(tracker.status).toBe('running')
   expect(tracker.tool).toBe('Bash')
   expect(tracker.contextTokens).toBe(2 + 30516 + 18946)

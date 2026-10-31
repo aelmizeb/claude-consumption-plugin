@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, PluginOptions, Register } from 'claude-code'
 
 import type { FleetSnapshot } from '../types'
-import { createHost } from '../src/host'
+import type { Host } from '../src/host'
 import { Monitor } from '../src/monitor'
 import { STATUS_COLOR, STATUS_LABEL, formatTokens, hudRows, scene, sceneAlt } from '../src/scene'
 import { statusText } from '../src/status'
@@ -35,6 +35,31 @@ let city: { columns: number; rows: number } | undefined
 let latest: FleetSnapshot | null = null
 let frame = 0
 let isStarted = false
+/** Claude Code names it on the events below; the configuration directory is read from it. */
+let transcript: string | undefined
+
+function createHost($: EngineInterface): Host {
+  return {
+    transcript: () => transcript,
+    folders: async () => [await $.session.cwd(), await $.session.root()],
+    usage: () => $.session.usage(),
+    stat: path => $.fs.stat(path),
+    list: async path => [...(await $.fs.list(path))],
+    exists: path => $.fs.exists(path),
+    readText: path => $.fs.read(path),
+    readBytes: async path => Uint8Array.fromBase64((await $.fs.read(path, { as: 'bytes' })).base64),
+    async tail(path, offset) {
+      const { exitCode, stdout, stderr, isStdoutTruncated } = await $.process.run(['tail', '-c', `+${offset + 1}`, path], { timeoutMs: 60_000 })
+
+      if (exitCode !== 0) throw new Error(`tail exited with ${exitCode}: ${stderr.slice(0, 200)}`)
+
+      return { text: stdout, isCut: isStdoutTruncated === true }
+    },
+    load: key => $.store.get(key),
+    save: (key, value) => $.store.set(key, value),
+    log: line => void $.ui.log(line, { to: 'debug' }),
+  }
+}
 
 function ensureMonitor($: EngineInterface, options: PluginOptions) {
   monitor ??= new Monitor(
@@ -73,13 +98,24 @@ function start($: EngineInterface, options: PluginOptions) {
   const pollMs = Math.max(1, Number(options.poll_seconds ?? 2)) * 1000
 
   $.clock.every(pollMs, () => void running.tick())
-  $.clock.after(1000, () => void running.rescanCosts())
   $.clock.every(SCAN_EVERY_MS, () => void running.rescanCosts())
   $.clock.every(FRAME_MS, () => animate($))
   if (options.open_at_start !== false) void $.ui.open({ id: PANE, title: TITLE })
 }
 
 export const register: Register = (on, options) => {
+  on('classic.SessionStart', ($, e, next) => {
+    transcript = e.transcript_path
+
+    return next(e)
+  })
+
+  on('classic.UserPromptSubmit', ($, e, next) => {
+    transcript = e.transcript_path
+
+    return next(e)
+  })
+
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: COMMAND,

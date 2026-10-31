@@ -18,7 +18,7 @@ export class FakeHost implements Host {
   files = new Map<string, { bytes: Uint8Array; mtimeMs: number }>()
   store = new Map<string, unknown>()
   logs: string[] = []
-  id = 'sess-1'
+  transcriptFile: string | undefined = '/home/.claude/projects/-proj/sess-1.jsonl'
   cwd = '/proj'
   measures: SessionUsage = { startedAt: 0, context: { window: 1_000_000, tokens: 200_000, percent: 20 }, rateLimits: [], cost: { usd: 1.5 } }
 
@@ -39,8 +39,7 @@ export class FakeHost implements Host {
     return file
   }
 
-  configDir = async () => '/home/.claude'
-  sessionId = async () => this.id
+  transcript = () => this.transcriptFile
   folders = async () => [this.cwd, this.cwd]
   usage = async () => this.measures
   exists = async (path: string) => this.files.has(path)
