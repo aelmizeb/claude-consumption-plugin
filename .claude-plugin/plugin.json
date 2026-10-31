@@ -1,7 +1,7 @@
 {
   "name": "consumption-hud",
   "displayName": "Consumption HUD",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Animated cyberpunk dashboard for Claude Code: track agents, tasks, tokens, context, costs and quota in a pane, from your local session transcripts.",
   "author": {
     "name": "Abdellatif El Mizeb",

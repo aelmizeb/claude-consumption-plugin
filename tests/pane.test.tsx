@@ -113,3 +113,19 @@ test('a run with no surface starts nothing', async ($, on) => {
 
   expect(opened).toEqual([])
 })
+
+test('a session already running learns its transcript at the end of a turn', async ($, on) => {
+  const written: unknown[] = []
+
+  on('classic.Stop', () => ({}))
+  on('state.get', () => ({ value: { value: undefined, version: 1 } }))
+  on('state.set', (_, e) => {
+    written.push(e)
+
+    return { value: { isSet: true, version: 2 } }
+  })
+
+  await $.classic.Stop({ stop_hook_active: false, transcript_path: '/home/.claude/projects/p/s.jsonl' })
+
+  expect(JSON.stringify(written)).toContain('/home/.claude/projects/p/s.jsonl')
+})

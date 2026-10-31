@@ -40,6 +40,8 @@ The pane needs Claude Code 2.1.287 or later in the terminal and 2.1.299 or later
 
 The pane opens by itself when a session starts, wherever the window is wide enough to dock it (from 144 columns in a terminal). Otherwise, and whenever you closed it:
 
+If you install the plugin during a session, tokens, memory, week and month fill in after Claude's next reply.
+
 | Command | What it does |
 | --- | --- |
 | `/consumption` | Opens the pane and re-reads everything |
@@ -79,7 +81,7 @@ The plugin only observes. It makes no network request, calls no model, reads no 
 - **It runs one program, `tail`**, as `tail -c +<offset> <transcript>`, on a transcript over 4 MB, because Claude Code's own file API refuses larger files. `tail` only hands the end of that file back to the plugin, which reads it like any other transcript: it sends nothing anywhere, and the plugin starts no other program.
 - **It stores one thing**: a cache in the plugin's own store, in your Claude Code data, so unchanged transcripts are not read again. For each transcript it holds the path, size, date, cost and token counts.
 - **It hooks these events**, and passes each one on unchanged:
-  - `classic.SessionStart`, only to learn where this session's transcript is. It never reads your prompts as they are sent;
+  - `classic.SessionStart` and `classic.Stop`, only to learn where this session's transcript is. It ignores everything else they carry, and never reads your prompts as they are sent;
   - `session.start` and `session.attach`, to start when a surface can show the pane;
   - `session.measure`, for the optional status line;
   - `command.run`, only for its own `/consumption` command;

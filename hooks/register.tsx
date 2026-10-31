@@ -20,7 +20,7 @@ const MIN_CITY_ROWS = 4
 const MAX_CITY_ROWS = 10
 
 const snapshot = atom({ plugin: 'consumption-hud', key: 'snapshot' } as const, null, { shape: 'snapshot-1' })
-// Claude Code names the transcript at the start of a session and after a /clear; a reload must not lose it.
+// Claude Code names the transcript at the start of a session, after a /clear and at the end of a turn; a reload must not lose it.
 const savedTranscript = atom({ plugin: 'consumption-hud', key: 'transcript' } as const, null, { shape: 'transcript-1' })
 
 function agentRows(loops: readonly FleetLoop[]) {
@@ -104,6 +104,13 @@ function start($: EngineInterface, options: PluginOptions) {
 
 export const register: Register = (on, options) => {
   on('classic.SessionStart', async ($, e, next) => {
+    await update($, savedTranscript, () => e.transcript_path)
+
+    return next(e)
+  })
+
+  // A plugin installed or reloaded mid-session missed the start: the end of a turn names the transcript too.
+  on('classic.Stop', async ($, e, next) => {
     await update($, savedTranscript, () => e.transcript_path)
 
     return next(e)
