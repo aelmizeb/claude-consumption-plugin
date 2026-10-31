@@ -10,6 +10,7 @@
   "homepage": "https://github.com/aelmizeb/claude-consumption-plugin#readme",
   "repository": "https://github.com/aelmizeb/claude-consumption-plugin",
   "license": "MIT",
+  "privacyPolicyUrl": "https://github.com/aelmizeb/claude-consumption-plugin/blob/main/README.md#privacy",
   "keywords": [
     "tokens",
     "cost",

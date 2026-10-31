@@ -60,6 +60,14 @@ Set them in `/config`.
 | Idle after (seconds) | 600 | Without transcript activity for longer than this, the session counts as idle |
 | Compare with DeepSeek | off | Adds a row with what the same tokens would have cost on DeepSeek, see below |
 
+## Privacy
+
+Everything stays on your computer. Consumption HUD has no server and no account, collects nothing about you, and sends nothing to its author, to Anthropic or to anyone else.
+
+It reads your local Claude Code transcripts and the project's `MEMORY.md` index, which can contain personal data if you typed any in a conversation. It uses them only to compute token counts and costs and to show tool names and sub-agent descriptions in the pane. Its local cache holds, for each transcript, the file path, size, date, cost and token counts; a file path can include your operating system username. The cache stays in Claude Code's plugin store on your computer.
+
+Questions: [open an issue](https://github.com/aelmizeb/claude-consumption-plugin/issues).
+
 ## What it reads, runs and stores
 
 The plugin only observes. It makes no network request, calls no model, reads no environment variable, does not change your settings, and does not touch your prompts or tool calls. Nothing it reads leaves your computer.
