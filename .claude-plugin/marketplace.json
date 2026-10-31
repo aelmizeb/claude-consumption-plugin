@@ -1,0 +1,12 @@
+{
+  "name": "aelmizeb-plugins",
+  "owner": { "name": "Abdellatif El Mizeb" },
+  "metadata": { "description": "Plugins by Abdellatif El Mizeb." },
+  "plugins": [
+    {
+      "name": "consumption-hud",
+      "source": "./",
+      "description": "Animated cyberpunk dashboard for Claude Code: track agents, tasks, tokens, context, costs and quota in a pane, from your local session transcripts."
+    }
+  ]
+}

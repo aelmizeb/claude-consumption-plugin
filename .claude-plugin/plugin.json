@@ -1,0 +1,57 @@
+{
+  "name": "consumption-hud",
+  "displayName": "Consumption HUD",
+  "version": "0.1.0",
+  "description": "Animated cyberpunk dashboard for Claude Code: track agents, tasks, tokens, context, costs and quota in a pane, from your local session transcripts.",
+  "author": {
+    "name": "Abdellatif El Mizeb",
+    "url": "https://github.com/aelmizeb"
+  },
+  "homepage": "https://github.com/aelmizeb/claude-consumption-plugin#readme",
+  "repository": "https://github.com/aelmizeb/claude-consumption-plugin",
+  "license": "MIT",
+  "keywords": [
+    "tokens",
+    "cost",
+    "usage",
+    "quota",
+    "agents",
+    "dashboard"
+  ],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "open_at_start": {
+      "type": "boolean",
+      "title": "Open the pane at startup",
+      "description": "Opens the pane when a session starts, where the window is wide enough to dock it. /consumption always opens it.",
+      "default": true
+    },
+    "status_line": {
+      "type": "boolean",
+      "title": "Show the status line",
+      "description": "Pins a line under the prompt with context, session cost and quota.",
+      "default": false
+    },
+    "poll_seconds": {
+      "type": "number",
+      "title": "Refresh interval (seconds)",
+      "description": "How often the transcripts are re-read.",
+      "default": 2,
+      "min": 1
+    },
+    "idle_after_seconds": {
+      "type": "number",
+      "title": "Idle after (seconds)",
+      "description": "Without transcript activity for longer than this, the session is considered idle.",
+      "default": 600,
+      "min": 30
+    },
+    "compare_with_deepseek": {
+      "type": "boolean",
+      "title": "Compare with DeepSeek",
+      "description": "Adds a HUD row with what the same tokens would have cost on deepseek-v4-pro at peak rates, for the session, the week and the month.",
+      "default": false
+    }
+  },
+  "icon": "./.claude-plugin/icon.png"
+}
