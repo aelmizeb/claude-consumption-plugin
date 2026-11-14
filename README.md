@@ -78,7 +78,11 @@ The plugin only observes. It makes no network request, calls no model, reads no 
   - this session's transcript and those of its sub-agents, for the agents, tools and tokens;
   - every transcript of every project changed since the start of the week or month, for the week and month costs. It keeps only their token counts and cost, never their content;
   - the project's `MEMORY.md` index, for the entry count.
-- **It runs one program, `tail`**, as `tail -c +<offset> <transcript>`, on a transcript over 4 MB, because Claude Code's own file API refuses larger files. `tail` only hands the end of that file back to the plugin, which reads it like any other transcript: it sends nothing anywhere, and the plugin starts no other program.
+- **It runs one program, `tail`, and no other.** The single call is `$.process.run(['tail', '-c', '+<offset>', '--', '<transcript>.jsonl'])` in `hooks/register.tsx`:
+  - *why*: Claude Code's own file API refuses a file over 4 MB, so a transcript past that size is read with `tail` instead;
+  - *what it does*: `tail` prints that transcript from byte `<offset>` to its end, and the plugin reads the output like any other transcript. `tail` writes no file and opens no connection;
+  - *what varies*: only the byte offset, a whole number the plugin computed, and the path, which always ends in `.jsonl` and comes from Claude Code's transcript folder. The call refuses anything else, and `--` keeps a path from being read as an option. The program name and the `-c` flag are fixed text, and no shell is involved.
+- **It sends nothing out.** The plugin reads local data, and `$.process.run` is the only call it makes that could carry data out of Claude Code. It is used for `tail` alone, as above, whose output comes back to the plugin and goes nowhere else. There is no network request anywhere in the plugin, and what it reads is shown in the pane or kept in the cache below.
 - **It stores one thing**: a cache in the plugin's own store, in your Claude Code data, so unchanged transcripts are not read again. For each transcript it holds the path, size, date, cost and token counts.
 - **It hooks these events**, and passes each one on unchanged:
   - `classic.SessionStart` and `classic.Stop`, only to learn where this session's transcript is. It ignores everything else they carry, and never reads your prompts as they are sent;

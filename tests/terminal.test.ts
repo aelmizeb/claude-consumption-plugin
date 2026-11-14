@@ -1,4 +1,5 @@
 import { expect, test } from 'claude-code/testing'
+import { fromBase64 } from '../src/base64'
 import { cityCells, cityPixels } from '../src/terminal'
 import type { FleetLoop } from '../src/types'
 
@@ -9,7 +10,7 @@ const drone: FleetLoop = { ...main, id: 'a', type: 'Explore', parentId: 'main' }
 test('a raster holds one cell per column and row: a half block, then two colours', () => {
   const columns = 8
   const rows = 3
-  const bytes = Uint8Array.fromBase64(cityCells(columns, rows, [main], 0))
+  const bytes = fromBase64(cityCells(columns, rows, [main], 0))
   const words = new Uint32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4)
 
   expect(words.length).toBe(columns * rows * 3)
