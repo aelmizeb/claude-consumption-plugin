@@ -123,6 +123,10 @@ claude plugin test .                                 # the tests
 claude plugin validate --strict --profile directory .
 ```
 
+## Author
+
+[Abdellatif El Mizeb](https://abdellatifelmizeb.com/en) · [GitHub](https://github.com/aelmizeb)
+
 ## License
 
 MIT.

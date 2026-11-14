@@ -5,7 +5,7 @@
   "description": "Animated cyberpunk dashboard for Claude Code: track agents, tasks, tokens, context, costs and quota in a pane, from your local session transcripts.",
   "author": {
     "name": "Abdellatif El Mizeb",
-    "url": "https://github.com/aelmizeb"
+    "url": "https://abdellatifelmizeb.com/en"
   },
   "homepage": "https://github.com/aelmizeb/claude-consumption-plugin#readme",
   "repository": "https://github.com/aelmizeb/claude-consumption-plugin",
