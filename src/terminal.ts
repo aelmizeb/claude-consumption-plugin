@@ -1,3 +1,4 @@
+import { toBase64 } from './base64'
 import { BUILDINGS, NEON, STATUS_COLOR, noise } from './scene'
 import { type FleetLoop, MAIN, isOver } from './types'
 
@@ -128,5 +129,5 @@ export function cityCells(columns: number, rows: number, list: readonly FleetLoo
     words[i * 3 + 2] = pixels[(row * 2 + 1) * columns + column] ?? 0
   }
 
-  return new Uint8Array(words.buffer).toBase64()
+  return toBase64(new Uint8Array(words.buffer))
 }

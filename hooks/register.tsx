@@ -2,6 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, PluginOptions, Register } from 'claude-code'
 
 import type { FleetSnapshot } from '../types'
+import { fromBase64 } from '../src/base64'
 import type { Host } from '../src/host'
 import { Monitor } from '../src/monitor'
 import { STATUS_COLOR, STATUS_LABEL, formatTokens, hudRows, scene, sceneAlt } from '../src/scene'
@@ -46,9 +47,12 @@ function createHost($: EngineInterface): Host {
     list: async path => [...(await $.fs.list(path))],
     exists: path => $.fs.exists(path),
     readText: path => $.fs.read(path),
-    readBytes: async path => Uint8Array.fromBase64((await $.fs.read(path, { as: 'bytes' })).base64),
+    readBytes: async path => fromBase64((await $.fs.read(path, { as: 'bytes' })).base64),
+    // The only program the plugin starts: `tail` hands the end of a transcript back, and nothing else.
     async tail(path, offset) {
-      const { exitCode, stdout, stderr, isStdoutTruncated } = await $.process.run(['tail', '-c', `+${offset + 1}`, path], { timeoutMs: 60_000 })
+      if (!path.endsWith('.jsonl') || !Number.isSafeInteger(offset) || offset < 0) throw new Error('tail only reads a transcript from a byte offset')
+
+      const { exitCode, stdout, stderr, isStdoutTruncated } = await $.process.run(['tail', '-c', `+${offset + 1}`, '--', path], { timeoutMs: 60_000 })
 
       if (exitCode !== 0) throw new Error(`tail exited with ${exitCode}: ${stderr.slice(0, 200)}`)
 
@@ -103,18 +107,19 @@ function start($: EngineInterface, options: PluginOptions) {
 }
 
 export const register: Register = (on, options) => {
+  // A hook that fails must not hold the session back: each one that gates an event passes it on all the same.
   on('classic.SessionStart', async ($, e, next) => {
     await update($, savedTranscript, () => e.transcript_path)
 
     return next(e)
-  })
+  }).catch(($, e, next) => next(e))
 
   // A plugin installed or reloaded mid-session missed the start: the end of a turn names the transcript too.
   on('classic.Stop', async ($, e, next) => {
     await update($, savedTranscript, () => e.transcript_path)
 
     return next(e)
-  })
+  }).catch(($, e, next) => next(e))
 
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -155,7 +160,7 @@ export const register: Register = (on, options) => {
     const summary = shown ? sceneAlt(shown.loops, shown.memory, shown.figures) : 'No figures yet.'
 
     return { text: opened.isPlaced ? `Consumption pane opened: ${summary}.` : `${summary}. The pane is not shown here: ${opened.reason}` }
-  })
+  }).catch(() => ({ text: 'Consumption HUD could not read its figures; try /consumption again.' }))
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const shown = await read($, snapshot)
